@@ -228,8 +228,8 @@ jobs:
           name: "Extlib v$EXTLIB_VERSION"            
           body: |
             Find here last ext libs for radioss including hmreader
-          files: |
-            ${{ env.WORKDIR }}/extlib.zip
+          # files: |
+          #   ${{ env.WORKDIR }}/extlib.zip
           clear_attachments: true    
           # target_commit: ${{ env.LAST_STABLE_COMMIT }}
 
