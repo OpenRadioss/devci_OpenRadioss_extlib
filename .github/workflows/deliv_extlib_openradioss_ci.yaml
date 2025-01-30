@@ -262,6 +262,14 @@ jobs:
       - name: Set extlib version in OpenRadiossRadioss repo
         working-directory: ${{ env.WORKDIR_OR }}
         run: |
+          # Force local branch to point on same commit as remote branch, way to restore a correct env if old push failed before
+          git fetch origin ${BRANCH_NAME}
+          git reset --hard origin/${BRANCH_NAME}
+          # git lfs install
+          echo "-------checkout"
+          git branch && git log --pretty=oneline -n 5
+          echo "-------"      
+                  
           # Add new files
           git config --global user.email "${{ env.GIT_SERVBOT_EMAIL }}"
           git config --global user.name "${{ env.GIT_SERVBOT_USER }}"
