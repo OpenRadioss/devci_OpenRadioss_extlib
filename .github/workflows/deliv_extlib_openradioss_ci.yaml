@@ -183,7 +183,7 @@ jobs:
 
           git commit -m "Update extlib version to v${current_version}"
 
-          Create zip for asset
+          # Create zip for asset
           zip -r extlib.zip extlib
 
           if [[ -n $(git status --porcelain) ]]; then
