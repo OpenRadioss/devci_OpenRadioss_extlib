@@ -63,7 +63,6 @@ jobs:
       MSG_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS: "Could not set extlib version in OpenRadioss repository"     
       HMREADER_OPENSOURCE_LOCAL_DIR: "extlib/hm_reader"
 
-
     steps:
 
       # Set the working dir suffixed with deliv_extlib
@@ -71,7 +70,7 @@ jobs:
         run: |
           echo "WORKDIR=deliv_extlib" >> $GITHUB_ENV
           echo "WORKDIR_OR=deliv_extlib_openradioss" >> $GITHUB_ENV
-         echo "DELIVERY_STATUS=0" >> $GITHUB_ENV
+          echo "DELIVERY_STATUS=0" >> $GITHUB_ENV
 
       - name: Create specific deliv extlib oriented WS directory
         run: |
