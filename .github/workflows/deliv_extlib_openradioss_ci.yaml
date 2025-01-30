@@ -247,7 +247,7 @@ jobs:
           # DEV ONLY #
           repository: 'OpenRadioss/devci_OpenRadioss'
           event-type: 'extlib-update'
-          client-payload: '{"extlib_version": "${{ env.EXTLIB_VERSION }}", "extlib_url": "${{ env.EXTLIB_URL }}"}'
+          client-payload: '{"version": "${{ env.EXTLIB_VERSION }}", "url": "${{ env.EXTLIB_URL }}"}'
 
       # # Get clone of OpenRadioss
       # - name: Checkout git sources
