@@ -414,7 +414,7 @@ jobs:
             # export HMREADER_TO_EMAIL="mquinzin@europe.altair.com"
 
             # Send email
-            SUBJECT="[ HMREADER LIBS PUSH on OPENRADIOSS ] - Error in CI"
+            SUBJECT="[ NEW EXTLIB OPENRADIOSS_EXTLIB ] - Error in CI"
             echo -e "${MAILMSG}" | ${MAIL_COMMAND} -r ${FROM_EMAIL} -s "${SUBJECT}" ${HMREADER_TO_EMAIL}
             echo -e "${MAILMSG}" | ${MAIL_COMMAND} -r ${FROM_EMAIL} -s "${SUBJECT}" mquinzin@europe.altair.com
 
