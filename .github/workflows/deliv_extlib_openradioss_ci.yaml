@@ -170,7 +170,7 @@ jobs:
           current_version=$(grep -oP '"version"\s*:\s*"\K[^"]+' ${{ env.VERSION_FILE }})
           current_version=$((current_version + 1))
           echo "Current version is: ${current_version}"
-          asset_url="${{ github.repository_url }}/releases/download/v${current_version}/extlib.zip"
+          asset_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/v${current_version}/extlib.zip"
           echo "{ \"version\":\"${current_version}\",\"url\":\"${asset_url}\"}" > ${{ env.VERSION_FILE }}
           echo "EXTLIB_VERSION=${current_version}" >> $GITHUB_ENV
 
