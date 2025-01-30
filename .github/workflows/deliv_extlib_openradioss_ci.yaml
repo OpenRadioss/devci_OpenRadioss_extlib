@@ -59,19 +59,23 @@ jobs:
       MSG_STEP_PUSH_OR: "Could not push libraries on repository"  
       STATUS_STEP_CREATE_RELEASE: 0
       MSG_STEP_CREATE_RELEASE: "Could not create release on repository"
+      STATUS_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS: 0
+      MSG_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS: "Could not set extlib version in OpenRadioss repository"     
       HMREADER_OPENSOURCE_LOCAL_DIR: "extlib/hm_reader"
+
 
     steps:
 
-      # Set the working dir suffixed with deliv_hmreader
+      # Set the working dir suffixed with deliv_extlib
       - name: Set workdir and status
         run: |
-          echo "WORKDIR=deliv_hmreader" >> $GITHUB_ENV
-          echo "DELIVERY_STATUS=0" >> $GITHUB_ENV
+          echo "WORKDIR=deliv_extlib" >> $GITHUB_ENV
+          echo "WORKDIR_OR=deliv_extlib_openradioss" >> $GITHUB_ENV
+         echo "DELIVERY_STATUS=0" >> $GITHUB_ENV
 
       - name: Create specific deliv extlib oriented WS directory
         run: |
-          mkdir -p ${{ env.WORKDIR }}
+          mkdir -p ${{ env.WORKDIR }} ${{ WORKDIR_OR }}
 
       - name: Checking delivery commit
         working-directory: ${{ env.WORKDIR }}
@@ -153,7 +157,6 @@ jobs:
         with:
           path: ${{ env.WORKDIR }}
           clean: 'true'
-          lfs: 'true'
           # Use a PAT else the push won't trigger the next workflow
           token: ${{ env.GIT_PUSH_SERVBOT_PAT }}          
 
@@ -200,7 +203,7 @@ jobs:
           # git commit -m "Update extlib version to v${current_version}"
 
           # Create zip for asset
-          zip -r extlib.zip extlib
+          # zip -r extlib.zip extlib
 
       # - name: Push changes
       #   uses: ad-m/github-push-action@master
@@ -216,28 +219,52 @@ jobs:
           # Set correct end of step status (if not an email will be sent)
           echo "STATUS_STEP_PUSH_OR=1" >> $GITHUB_ENV
 
-      # The action creates the release with an already existing tag (latest-xxxxx) so we use option skip_tag_creation: true
-      # We do this because we have already checkouted the wanted commit before
-      # Prerequisite: create the tag with command : git tag latest-YYYMMDD <commit id>; git push origin latest-YYYMMDD
-      - name: Release the new binaries
-        uses: docker://ghcr.io/mini-bomba/create-github-release:v1.2.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          release: "Extlib v$EXTLIB_VERSION"
-          tag: "vA"
-          name: "Extlib v$EXTLIB_VERSION"            
-          body: |
-            Find here last ext libs for radioss including hmreader
-          # files: |
-          #   ${{ env.WORKDIR }}/extlib.zip
-          clear_attachments: true    
-          # target_commit: ${{ env.LAST_STABLE_COMMIT }}
+      # # The action creates the release with an already existing tag (latest-xxxxx) so we use option skip_tag_creation: true
+      # # We do this because we have already checkouted the wanted commit before
+      # # Prerequisite: create the tag with command : git tag latest-YYYMMDD <commit id>; git push origin latest-YYYMMDD
+      # - name: Release the new binaries
+      #   uses: docker://ghcr.io/mini-bomba/create-github-release:v1.2.0
+      #   with:
+      #     token: ${{ secrets.GITHUB_TOKEN }}
+      #     release: "Extlib v$EXTLIB_VERSION"
+      #     tag: "vA"
+      #     name: "Extlib v$EXTLIB_VERSION"            
+      #     body: |
+      #       Find here last ext libs for radioss including hmreader
+      #     # files: |
+      #     #   ${{ env.WORKDIR }}/extlib.zip
+      #     clear_attachments: true    
+      #     # target_commit: ${{ env.LAST_STABLE_COMMIT }}
 
       - name: Set release creation status
         working-directory: ${{ env.WORKDIR }}
         run: |    
           # Set correct end of step status (if not an email will be sent)
           echo "STATUS_STEP_CREATE_RELEASE=1" >> $GITHUB_ENV
+
+      # Get clone of OpenRadioss
+      - name: Checkout git sources
+        uses: actions/checkout@v4
+        with:
+          path: ${{ env.WORKDIR_OR }}
+          clean: 'true'
+          # Use a PAT else the push won't trigger the next workflow
+          # DEV ONLY #
+          # repository: '${{ secrets.OPENRADIOSS_REPOSITORY }}'
+          repository: 'OpenRadioss/devci_OpenRadioss'
+          token: ${{ env.GIT_PUSH_SERVBOT_PAT }}     
+
+      - name: Set extlib version in OpenRadiossRadioss repo
+        working-directory: ${{ env.WORKDIR_OR }}
+        run: |
+            pwd
+            ls -l
+
+      - name: Set exlib version in openradioss
+        working-directory: ${{ env.WORKDIR }}
+        run: |    
+          # Set correct end of step status (if not an email will be sent)
+          echo "STATUS_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS=1" >> $GITHUB_ENV
 
       - name: Managing step execution
         if: ${{ always() }}
@@ -298,8 +325,21 @@ jobs:
 
           if [ "$CONTINUE" = 1 ]
           then          
-            echo -e "\n#### STATUS_STEP_CREATE_RELEASE ###"
-            if [ "$STATUS_STEP_CREATE_RELEASE" = 0 ]
+            echo -e "\n#### STATUS_STEP_SET_EX ###"
+            if [ "$STATUS_STEP_PUSH_OR" = 0 ]
+            then
+              echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
+              MAILMSG+="$MSG_STEP_PUSH_OR\n"
+              CONTINUE=0
+            else
+              echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
+            fi
+          fi    
+
+          if [ "$CONTINUE" = 1 ]
+          then          
+            echo -e "\n#### STATUS_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS ###"
+            if [ "$STATUS_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS" = 0 ]
             then
               echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
               MAILMSG+="$MSG_STEP_PUSH_OR\n"
@@ -308,6 +348,7 @@ jobs:
               echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
             fi
           fi         
+
           # Send email 
           if [ "$CONTINUE" = 0 ] 
           then
