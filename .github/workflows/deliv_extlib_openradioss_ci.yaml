@@ -219,9 +219,9 @@ jobs:
         uses: docker://ghcr.io/mini-bomba/create-github-release:v1.2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          release: "Extlib v$EXTLIB_VERSION"
-          tag: "v$EXTLIB_VERSION"
-          name: "Extlib v$EXTLIB_VERSION"            
+          release: "Extlib v${{ env.EXTLIB_VERSION }}"
+          tag: "v${{ env.EXTLIB_VERSION }}"
+          name: "Extlib v${{ env.EXTLIB_VERSION }}"            
           body: |
             Find here last ext libs for radioss including hmreader
           files: |
