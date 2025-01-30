@@ -178,6 +178,7 @@ jobs:
           current_version=$((current_version + 1))
           echo "Current version is: ${current_version}"
           echo "extlib v${current_version}" > ${{ env.VERSION_FILE }}
+          echo "EXTLIB_VERSION=${current_version}" >> $GITHUB_ENV
 
           # Add new files
           git config --global user.email "${{ env.GIT_SERVBOT_EMAIL }}"
@@ -196,6 +197,9 @@ jobs:
 
           git commit -m "Update extlib version to v${current_version}"
 
+          # Create zip for asset
+          zip -r extlib.zip extlib
+
       - name: Push changes
         uses: ad-m/github-push-action@master
         if: ${{ env.GO_PUSH == 1 }} 
@@ -204,88 +208,123 @@ jobs:
           branch: ${{ github.ref }}     
           directory: ${{ env.WORKDIR }}    
 
-      # - name: Set push status
-      #   working-directory: ${{ env.WORKDIR }}
-      #   run: |    
-      #     # Set correct end of step status (if not an email will be sent)
-      #     echo "STATUS_STEP_PUSH_OR=1" >> $GITHUB_ENV
+      - name: Set push status
+        working-directory: ${{ env.WORKDIR }}
+        run: |    
+          # Set correct end of step status (if not an email will be sent)
+          echo "STATUS_STEP_PUSH_OR=1" >> $GITHUB_ENV
 
-      # - name: Managing step execution
-      #   if: ${{ always() }}
-      #   run: |
+      # The action creates the release with an already existing tag (latest-xxxxx) so we use option skip_tag_creation: true
+      # We do this because we have already checkouted the wanted commit before
+      # Prerequisite: create the tag with command : git tag latest-YYYMMDD <commit id>; git push origin latest-YYYMMDD
+      - name: Release the new binaries
+        uses: docker://ghcr.io/mini-bomba/create-github-release:v1.2.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # release: "${{ env.LAST_STABLE_TAG_NAME }}"
+          tag: "v$EXTLIB_VERSION"
+          name: "Extlib v$EXTLIB_VERSION"            
+          body: |
+            Find here last ext libs for radioss including hmreader
+          files: |
+            ${{ env.WORKDIR }}/extlib.zip
+          clear_attachments: true    
+          # target_commit: ${{ env.LAST_STABLE_COMMIT }}
 
-      #     LOG_PATH="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-      #     MAILMSG="The delivery of hm reader libraries into OpenRadioss repository fails.\n\nFind detail in log page ${LOG_PATH}\n\n"
-      #     CONTINUE=1
+      - name: Set release creation status
+        working-directory: ${{ env.WORKDIR }}
+        run: |    
+          # Set correct end of step status (if not an email will be sent)
+          echo "STATUS_STEP_CREATE_RELEASE=1" >> $GITHUB_ENV
 
-      #     echo -e "\n#### STATUS_STEP_CHECK_DELIV_COMMIT ###"
-      #     if [ "$STATUS_STEP_CHECK_DELIV_COMMIT" = 0 ]
-      #     then
-      #       echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
-      #       MAILMSG+="$MSG_STEP_CHECK_DELIV_COMMIT\n"
-      #       CONTINUE=0
-      #     else
-      #       echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
-      #     fi
+      - name: Managing step execution
+        if: ${{ always() }}
+        run: |
 
-      #     if [ "$CONTINUE" = 1 ]
-      #     then          
-      #       echo -e "\n#### STATUS_STEP_CHECK_LIBS ###"
-      #       if [ "$STATUS_STEP_CHECK_LIBS" = 0 ]
-      #       then
-      #         echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
-      #         MAILMSG+="$MSG_STEP_CHECK_LIBS\n"
-      #         CONTINUE=0
-      #       else
-      #         echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
-      #       fi
-      #     fi
+          LOG_PATH="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          MAILMSG="The delivery of hm reader libraries into OpenRadioss repository fails.\n\nFind detail in log page ${LOG_PATH}\n\n"
+          CONTINUE=1
 
-      #     if [ "$CONTINUE" = 1 ]
-      #     then          
-      #       echo -e "\n#### STATUS_STEP_GET_LIBS ###"
-      #       if [ "$STATUS_STEP_GET_LIBS" = 0 ]
-      #       then
-      #         echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
-      #         MAILMSG+="$MSG_STEP_GET_LIBS\n"
-      #         CONTINUE=0
-      #       else
-      #         echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
-      #       fi
-      #     fi
+          echo -e "\n#### STATUS_STEP_CHECK_DELIV_COMMIT ###"
+          if [ "$STATUS_STEP_CHECK_DELIV_COMMIT" = 0 ]
+          then
+            echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
+            MAILMSG+="$MSG_STEP_CHECK_DELIV_COMMIT\n"
+            CONTINUE=0
+          else
+            echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
+          fi
 
-      #     if [ "$CONTINUE" = 1 ]
-      #     then          
-      #       echo -e "\n#### STATUS_STEP_PUSH_OR ###"
-      #       if [ "$STATUS_STEP_PUSH_OR" = 0 ]
-      #       then
-      #         echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
-      #         MAILMSG+="$MSG_STEP_PUSH_OR\n"
-      #         CONTINUE=0
-      #       else
-      #         echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
-      #       fi
-      #     fi          
+          if [ "$CONTINUE" = 1 ]
+          then          
+            echo -e "\n#### STATUS_STEP_CHECK_LIBS ###"
+            if [ "$STATUS_STEP_CHECK_LIBS" = 0 ]
+            then
+              echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
+              MAILMSG+="$MSG_STEP_CHECK_LIBS\n"
+              CONTINUE=0
+            else
+              echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
+            fi
+          fi
 
-      #     # Send email 
-      #     if [ "$CONTINUE" = 0 ] 
-      #     then
+          if [ "$CONTINUE" = 1 ]
+          then          
+            echo -e "\n#### STATUS_STEP_GET_LIBS ###"
+            if [ "$STATUS_STEP_GET_LIBS" = 0 ]
+            then
+              echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
+              MAILMSG+="$MSG_STEP_GET_LIBS\n"
+              CONTINUE=0
+            else
+              echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
+            fi
+          fi
+
+          if [ "$CONTINUE" = 1 ]
+          then          
+            echo -e "\n#### STATUS_STEP_PUSH_OR ###"
+            if [ "$STATUS_STEP_PUSH_OR" = 0 ]
+            then
+              echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
+              MAILMSG+="$MSG_STEP_PUSH_OR\n"
+              CONTINUE=0
+            else
+              echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
+            fi
+          fi          
+
+          if [ "$CONTINUE" = 1 ]
+          then          
+            echo -e "\n#### STATUS_STEP_CREATE_RELEASE ###"
+            if [ "$STATUS_STEP_CREATE_RELEASE" = 0 ]
+            then
+              echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
+              MAILMSG+="$MSG_STEP_PUSH_OR\n"
+              CONTINUE=0
+            else
+              echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
+            fi
+          fi         
+          # Send email 
+          if [ "$CONTINUE" = 0 ] 
+          then
     
-      #       # Setting SMTP server (docker host)
-      #       DOCKER_HOST=`/sbin/ip route|awk '/default/ { print $3 }'`
-      #       echo "set smtp=smtp://${DOCKER_HOST}:25" >> ${MAIL_CONFIG_FILE}
+            # Setting SMTP server (docker host)
+            DOCKER_HOST=`/sbin/ip route|awk '/default/ { print $3 }'`
+            echo "set smtp=smtp://${DOCKER_HOST}:25" >> ${MAIL_CONFIG_FILE}
 
-      #       # Print message in log 
-      #       echo -e $MAILMSG
+            # Print message in log 
+            echo -e $MAILMSG
 
-      #       # DEV ONLY #
-      #       # export HMREADER_TO_EMAIL="mquinzin@europe.altair.com"
+            # DEV ONLY #
+            # export HMREADER_TO_EMAIL="mquinzin@europe.altair.com"
 
-      #       # Send email
-      #       SUBJECT="[ HMREADER LIBS PUSH on OPENRADIOSS ] - Error in CI"
-      #       echo -e "${MAILMSG}" | ${MAIL_COMMAND} -r ${FROM_EMAIL} -s "${SUBJECT}" ${HMREADER_TO_EMAIL}
-      #       echo -e "${MAILMSG}" | ${MAIL_COMMAND} -r ${FROM_EMAIL} -s "${SUBJECT}" mquinzin@europe.altair.com
+            # Send email
+            SUBJECT="[ HMREADER LIBS PUSH on OPENRADIOSS ] - Error in CI"
+            echo -e "${MAILMSG}" | ${MAIL_COMMAND} -r ${FROM_EMAIL} -s "${SUBJECT}" ${HMREADER_TO_EMAIL}
+            echo -e "${MAILMSG}" | ${MAIL_COMMAND} -r ${FROM_EMAIL} -s "${SUBJECT}" mquinzin@europe.altair.com
 
-      #       # Exit fail to see it as a failure
-      #       exit 1
-      #     fi
+            # Exit fail to see it as a failure
+            exit 1
+          fi
