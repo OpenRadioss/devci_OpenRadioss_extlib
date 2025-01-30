@@ -167,7 +167,7 @@ jobs:
           jf rt download ${JF_OPTIONS} --flat=true --recursive --exclusions="*/_com/*" "${{ env.HM_REMOTE_DIR }}/(*)" ${HMREADER_OPENSOURCE_LOCAL_DIR}/{1}
 
           # Get current version in VERSION_FILE
-          current_version=$(grep -oP 'extlib v\K[0-9]+' ${{ env.VERSION_FILE }})
+          current_version=$(awk -F'"' '/"version" :/ {print $4}' ${{ env.VERSION_FILE }})
           current_version=$((current_version + 1))
           echo "Current version is: ${current_version}"
           asset_url="${{ github.repository_url }}/releases/download/v${current_version}/extlib.zip""
