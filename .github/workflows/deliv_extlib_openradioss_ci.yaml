@@ -177,7 +177,7 @@ jobs:
           current_version=$(grep -oP 'extlib v\K[0-9]+' ${{ env.VERSION_FILE }})
           current_version=$((current_version + 1))
           echo "Current version is: ${current_version}"
-          echo "extlib v${new_version}" > ${{ env.VERSION_FILE }}
+          echo "extlib v${current_version}" > ${{ env.VERSION_FILE }}
 
           # Add new files
           git config --global user.email "${{ env.GIT_SERVBOT_EMAIL }}"
@@ -194,7 +194,7 @@ jobs:
             exit 1
           fi
 
-          git commit -m "Update extlib version to v${new_version}"
+          git commit -m "Update extlib version to v${current_version}"
 
       - name: Push changes
         uses: ad-m/github-push-action@master
