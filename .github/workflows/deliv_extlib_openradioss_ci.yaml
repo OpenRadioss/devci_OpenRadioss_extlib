@@ -46,6 +46,7 @@ jobs:
       # Needed by gh auth
       GIT_PUSH_SERVBOT_PAT: ${{ secrets.GIT_PUSH_SERVBOT_PAT }}
       GO_PUSH: 0
+      GO_PUSH_OR: 0   
       GIT_SERVBOT_USER: ${{ secrets.GIT_SERVBOT_USER }}   
       GIT_SERVBOT_EMAIL: ${{ secrets.GIT_SERVBOT_EMAIL }} 
       HMREADER_TO_EMAIL: ${{ secrets.HMREADER_TO_EMAIL }}
@@ -206,6 +207,9 @@ jobs:
           #   exit 1
           # fi
 
+          # TO REMOVE
+          echo "STATUS_STEP_GET_LIBS=1" >> $GITHUB_ENV
+
       # - name: Push changes
       #   uses: ad-m/github-push-action@master
       #   if: ${{ env.GO_PUSH == 1 }} 
@@ -267,6 +271,15 @@ jobs:
 
           git commit -m "Update extlib version to v${current_version}"
 
+          if [[ -n $(git status --porcelain) ]]; then
+            # Set correct end of step status (if not an email will be sent)
+            echo "STATUS_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS=1" >> $GITHUB_ENV
+            echo "GO_PUSH_OR=1" >> $GITHUB_ENV
+          else
+            echo "There are no changes in the repository, abort."
+            exit 1
+          fi
+
       - name: Set exlib version in openradioss status
         working-directory: ${{ env.WORKDIR }}
         run: |    
@@ -275,7 +288,7 @@ jobs:
 
       - name: Push changes in OpenRadioss
         uses: ad-m/github-push-action@master
-        if: ${{ env.GO_PUSH == 1 }} 
+        if: ${{ env.GO_PUSH_OR == 1 }} 
         with:
           github_token: ${{ env.GIT_PUSH_SERVBOT_PAT }}
           branch: 'main'     
