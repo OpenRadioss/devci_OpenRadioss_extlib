@@ -174,37 +174,35 @@ jobs:
           jf rt download ${JF_OPTIONS} --flat=true --recursive --exclusions="*/_com/*" "${{ env.HM_REMOTE_DIR }}/(*)" ${HMREADER_OPENSOURCE_LOCAL_DIR}/{1}
 
           # Get current version in VERSION_FILE
-          current_version=$(grep -oP 'extlib v\K[0-9]+' ${ env.VERSION_FILE }})
-          echo "Current version found: ${current_version}"
+          current_version=$(grep -oP 'extlib v\K[0-9]+' ${{ env.VERSION_FILE }})
+          current_version=$((current_version + 1))
+          echo "Current version is: ${current_version}"
+          echo "extlib v${new_version}" > ${{ env.VERSION_FILE }}
 
-          pwd
-          ls -l
+          # Add new files
+          git config --global user.email "${{ env.GIT_SERVBOT_EMAIL }}"
+          git config --global user.name "${{ env.GIT_SERVBOT_USER }}"
+          git add ${{ env.VERSION_FILE }}
+          git status
 
+          if [[ -n $(git status --porcelain) ]]; then
+            # Set correct end of step status (if not an email will be sent)
+            echo "STATUS_STEP_GET_LIBS=1" >> $GITHUB_ENV
+            echo "GO_PUSH=1" >> $GITHUB_ENV
+          else
+            echo "There are no changes in the repository, abort."
+            exit 1
+          fi
 
-      #     # Add new files
-      #     git config --global user.email "${{ env.GIT_SERVBOT_EMAIL }}"
-      #     git config --global user.name "${{ env.GIT_SERVBOT_USER }}"
-      #     git add .
-      #     git status
+          git commit -m "Update extlib version to v${new_version}"
 
-      #     if [[ -n $(git status --porcelain) ]]; then
-      #       # Set correct end of step status (if not an email will be sent)
-      #       echo "STATUS_STEP_GET_LIBS=1" >> $GITHUB_ENV
-      #       echo "GO_PUSH=1" >> $GITHUB_ENV
-      #     else
-      #       echo "There are no changes in the repository, abort."
-      #       exit 1
-      #     fi
-
-      #     git commit -m "Update libhm_reader library for OpenRadioss"
-
-      # - name: Push changes
-      #   uses: ad-m/github-push-action@master
-      #   if: ${{ env.GO_PUSH == 1 }} 
-      #   with:
-      #     github_token: ${{ env.GIT_PUSH_SERVBOT_PAT }}
-      #     branch: ${{ github.ref }}     
-      #     directory: ${{ env.WORKDIR }}    
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        if: ${{ env.GO_PUSH == 1 }} 
+        with:
+          github_token: ${{ env.GIT_PUSH_SERVBOT_PAT }}
+          branch: ${{ github.ref }}     
+          directory: ${{ env.WORKDIR }}    
 
       # - name: Set push status
       #   working-directory: ${{ env.WORKDIR }}
