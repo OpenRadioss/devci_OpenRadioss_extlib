@@ -222,7 +222,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # release: "${{ env.LAST_STABLE_TAG_NAME }}"
-          tag: "v$EXTLIB_VERSION"
+          tag: "vA"
           name: "Extlib v$EXTLIB_VERSION"            
           body: |
             Find here last ext libs for radioss including hmreader
