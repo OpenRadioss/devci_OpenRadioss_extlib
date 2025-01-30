@@ -56,7 +56,9 @@ jobs:
       STATUS_STEP_GET_LIBS: 0
       MSG_STEP_GET_LIBS: "Could not get libraries from Jfrog"  
       STATUS_STEP_PUSH_OR: 0
-      MSG_STEP_PUSH_OR: "Could not push libraries on OpenRadioss repository"  
+      MSG_STEP_PUSH_OR: "Could not push libraries on repository"  
+      STATUS_STEP_CREATE_RELEASE: 0
+      MSG_STEP_CREATE_RELEASE: "Could not create release on repository"
       HMREADER_OPENSOURCE_LOCAL_DIR: "extlib/hm_reader"
 
     steps:
@@ -221,7 +223,7 @@ jobs:
         uses: docker://ghcr.io/mini-bomba/create-github-release:v1.2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          # release: "${{ env.LAST_STABLE_TAG_NAME }}"
+          release: "Extlib v$EXTLIB_VERSION"
           tag: "vA"
           name: "Extlib v$EXTLIB_VERSION"            
           body: |
