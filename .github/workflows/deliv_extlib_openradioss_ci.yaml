@@ -173,7 +173,7 @@ jobs:
           asset_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/v${current_version}/extlib.zip"
           echo "{ \"version\":\"${current_version}\",\"url\":\"${asset_url}\"}" > ${{ env.VERSION_FILE }}
           echo "EXTLIB_VERSION=${current_version}" >> $GITHUB_ENV
-          echo "EXTLIB_URL"=${asset_url}" >> $GITHUB_ENV
+          echo "EXTLIB_URL=${asset_url}" >> $GITHUB_ENV
 
 
           # Add new files
@@ -242,7 +242,7 @@ jobs:
       - name: Trigger OpenRadioss CI
         uses: peter-evans/repository-dispatch@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ env.GIT_PUSH_SERVBOT_PAT }}
           # repository: '${{ secrets.OPENRADIOSS_REPOSITORY }}'
           # DEV ONLY #
           repository: 'OpenRadioss/devci_OpenRadioss'
