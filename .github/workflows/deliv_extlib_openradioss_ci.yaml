@@ -197,14 +197,14 @@ jobs:
           # Create zip for asset
           # zip -r extlib.zip extlib
 
-          if [[ -n $(git status --porcelain) ]]; then
-            # Set correct end of step status (if not an email will be sent)
-            echo "STATUS_STEP_GET_LIBS=1" >> $GITHUB_ENV
-            echo "GO_PUSH=1" >> $GITHUB_ENV
-          else
-            echo "There are no changes in the repository, abort."
-            exit 1
-          fi
+          # if [[ -n $(git status --porcelain) ]]; then
+          #   # Set correct end of step status (if not an email will be sent)
+          #   echo "STATUS_STEP_GET_LIBS=1" >> $GITHUB_ENV
+          #   echo "GO_PUSH=1" >> $GITHUB_ENV
+          # else
+          #   echo "There are no changes in the repository, abort."
+          #   exit 1
+          # fi
 
       # - name: Push changes
       #   uses: ad-m/github-push-action@master
