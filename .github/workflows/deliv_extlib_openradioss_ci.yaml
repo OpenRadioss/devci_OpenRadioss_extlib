@@ -237,6 +237,17 @@ jobs:
           # Set correct end of step status (if not an email will be sent)
           echo "STATUS_STEP_CREATE_RELEASE=1" >> $GITHUB_ENV
 
+      # Trigger OpenRadioss CI to set the new version of extlib and cause a build/qa
+      - name: Trigger OpenRadioss CI
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # repository: '${{ secrets.OPENRADIOSS_REPOSITORY }}'
+          # DEV ONLY #
+          repository: 'OpenRadioss/devci_OpenRadioss'
+          event-type: 'extlib-update'
+          client-payload: '{"extlib_version": "${{ env.EXTLIB_VERSION }}"}'
+
       # # Get clone of OpenRadioss
       # - name: Checkout git sources
       #   uses: actions/checkout@v4
