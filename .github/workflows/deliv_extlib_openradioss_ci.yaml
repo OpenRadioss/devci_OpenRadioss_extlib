@@ -23,7 +23,7 @@ env:
   JF_OPTIONS: "--url=${{ secrets.JFROG_DELIVERY_URL }} --user=${{ secrets.JFROG_DELIVERY_USER }} --password=${{ secrets.JFROG_DELIVERY_TOKEN }}"
   MAIL_CONFIG_FILE: "/etc/mail.rc"
   MAIL_COMMAND: "Mail"
-  VERSION_FILE: "EXTLIB_VERSION.txt"
+  VERSION_FILE: "EXTLIB_VERSION.json"
 
 jobs:
 
@@ -170,8 +170,10 @@ jobs:
           current_version=$(grep -oP 'extlib v\K[0-9]+' ${{ env.VERSION_FILE }})
           current_version=$((current_version + 1))
           echo "Current version is: ${current_version}"
-          echo "extlib v${current_version}" > ${{ env.VERSION_FILE }}
+          asset_url="${{ github.repository_url }}/releases/download/v${current_version}/extlib.zip""
+          echo "{ \"version\":\"${current_version}\",\"url\":\"${asset_url}\"}" > ${{ env.VERSION_FILE }}
           echo "EXTLIB_VERSION=${current_version}" >> $GITHUB_ENV
+
 
           # Add new files
           git config --global user.email "${{ env.GIT_SERVBOT_EMAIL }}"
@@ -184,6 +186,7 @@ jobs:
           git commit -m "Update extlib version to v${current_version}"
 
           # Create zip for asset
+          cp ${{ env.VERSION_FILE }} extlib/
           zip -r extlib.zip extlib
 
           if [[ -n $(git status --porcelain) ]]; then
