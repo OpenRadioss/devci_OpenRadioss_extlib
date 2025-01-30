@@ -1,4 +1,4 @@
-name: Delivery extlib (incl HMReader) as assets (useful for OpenRadioss)
+name: Delivery extlib (incl HMReader from JF) as assets in release
 
 # This CI is triggerd by Gitlab Radioss CI to get libhmreader from Jfrog, extlib locally, and set the new version to use into OpenRadioss
 
@@ -23,6 +23,7 @@ env:
   JF_OPTIONS: "--url=${{ secrets.JFROG_DELIVERY_URL }} --user=${{ secrets.JFROG_DELIVERY_USER }} --password=${{ secrets.JFROG_DELIVERY_TOKEN }}"
   MAIL_CONFIG_FILE: "/etc/mail.rc"
   MAIL_COMMAND: "Mail"
+  VERSION_FILE: "EXTLIB_VERSION"
 
 jobs:
 
@@ -172,10 +173,13 @@ jobs:
           # Opensource libs
           jf rt download ${JF_OPTIONS} --flat=true --recursive --exclusions="*/_com/*" "${{ env.HM_REMOTE_DIR }}/(*)" ${HMREADER_OPENSOURCE_LOCAL_DIR}/{1}
 
+          # Get current version in VERSION_FILE
+          current_version=$(grep -oP 'extlib v\K[0-9]+' ${ env.VERSION_FILE }})
+          echo "Current version found: ${current_version}"
+
           pwd
           ls -l
-          echo "-----"
-          find .
+
 
       #     # Add new files
       #     git config --global user.email "${{ env.GIT_SERVBOT_EMAIL }}"
