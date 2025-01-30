@@ -180,7 +180,7 @@ jobs:
           pwd
           ls -l
           echo "-----"
-          find ${HMREADER_OPENSOURCE_LOCAL_DIR}/{1}
+          find ${HMREADER_OPENSOURCE_LOCAL_DIR}/
 
       #     # Add new files
       #     git config --global user.email "${{ env.GIT_SERVBOT_EMAIL }}"
