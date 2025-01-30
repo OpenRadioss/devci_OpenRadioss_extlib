@@ -173,6 +173,7 @@ jobs:
           asset_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/v${current_version}/extlib.zip"
           echo "{ \"version\":\"${current_version}\",\"url\":\"${asset_url}\"}" > ${{ env.VERSION_FILE }}
           echo "EXTLIB_VERSION=${current_version}" >> $GITHUB_ENV
+          echo "EXTLIB_URL"=${asset_url}" >> $GITHUB_ENV
 
 
           # Add new files
@@ -246,7 +247,7 @@ jobs:
           # DEV ONLY #
           repository: 'OpenRadioss/devci_OpenRadioss'
           event-type: 'extlib-update'
-          client-payload: '{"extlib_version": "${{ env.EXTLIB_VERSION }}"}'
+          client-payload: '{"extlib_version": "${{ env.EXTLIB_VERSION }}", "extlib_url": "${{ env.EXTLIB_URL }}"}'
 
       # # Get clone of OpenRadioss
       # - name: Checkout git sources
