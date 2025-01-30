@@ -55,8 +55,10 @@ jobs:
       MSG_STEP_CHECK_LIBS: "Some libraries are missing on Jfrog"  
       STATUS_STEP_GET_LIBS: 0
       MSG_STEP_GET_LIBS: "Could not get libraries from Jfrog"  
+      STATUS_STEP_PUSH: 0
+      MSG_STEP_PUSH: "Could not push extlib version on repository"  
       STATUS_STEP_PUSH_OR: 0
-      MSG_STEP_PUSH_OR: "Could not push libraries on repository"  
+      MSG_STEP_PUSH_OR: "Could not push extlib version on OpenRadioss repository"  
       STATUS_STEP_CREATE_RELEASE: 0
       MSG_STEP_CREATE_RELEASE: "Could not create release on repository"
       STATUS_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS: 0
@@ -190,19 +192,19 @@ jobs:
           # git add ${{ env.VERSION_FILE }}
           # git status
 
-          # if [[ -n $(git status --porcelain) ]]; then
-          #   # Set correct end of step status (if not an email will be sent)
-          #   echo "STATUS_STEP_GET_LIBS=1" >> $GITHUB_ENV
-          #   echo "GO_PUSH=1" >> $GITHUB_ENV
-          # else
-          #   echo "There are no changes in the repository, abort."
-          #   exit 1
-          # fi
-
           # git commit -m "Update extlib version to v${current_version}"
 
           # Create zip for asset
           # zip -r extlib.zip extlib
+
+          if [[ -n $(git status --porcelain) ]]; then
+            # Set correct end of step status (if not an email will be sent)
+            echo "STATUS_STEP_GET_LIBS=1" >> $GITHUB_ENV
+            echo "GO_PUSH=1" >> $GITHUB_ENV
+          else
+            echo "There are no changes in the repository, abort."
+            exit 1
+          fi
 
       # - name: Push changes
       #   uses: ad-m/github-push-action@master
@@ -216,7 +218,7 @@ jobs:
         working-directory: ${{ env.WORKDIR }}
         run: |    
           # Set correct end of step status (if not an email will be sent)
-          echo "STATUS_STEP_PUSH_OR=1" >> $GITHUB_ENV
+          echo "STATUS_STEP_PUSH=1" >> $GITHUB_ENV
 
       # # The action creates the release with an already existing tag (latest-xxxxx) so we use option skip_tag_creation: true
       # # We do this because we have already checkouted the wanted commit before
@@ -256,14 +258,34 @@ jobs:
       - name: Set extlib version in OpenRadiossRadioss repo
         working-directory: ${{ env.WORKDIR_OR }}
         run: |
-            pwd
-            ls -l
+          # Add new files
+          git config --global user.email "${{ env.GIT_SERVBOT_EMAIL }}"
+          git config --global user.name "${{ env.GIT_SERVBOT_USER }}"
+          echo "extlib v$EXTLIB_VERSION" > ${{ env.VERSION_FILE }}
+          git add ${{ env.VERSION_FILE }}
+          git status
 
-      - name: Set exlib version in openradioss
+          git commit -m "Update extlib version to v${current_version}"
+
+      - name: Set exlib version in openradioss status
         working-directory: ${{ env.WORKDIR }}
         run: |    
           # Set correct end of step status (if not an email will be sent)
           echo "STATUS_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS=1" >> $GITHUB_ENV
+
+      - name: Push changes in OpenRadioss
+        uses: ad-m/github-push-action@master
+        if: ${{ env.GO_PUSH == 1 }} 
+        with:
+          github_token: ${{ env.GIT_PUSH_SERVBOT_PAT }}
+          branch: 'main'     
+          directory: ${{ env.WORKDIR_OR }}    
+
+      - name: Set push status in OpenRadioss
+        working-directory: ${{ env.WORKDIR }}
+        run: |    
+          # Set correct end of step status (if not an email will be sent)
+          echo "STATUS_STEP_PUSH_OR=1" >> $GITHUB_ENV
 
       - name: Managing step execution
         if: ${{ always() }}
@@ -311,11 +333,11 @@ jobs:
 
           if [ "$CONTINUE" = 1 ]
           then          
-            echo -e "\n#### STATUS_STEP_PUSH_OR ###"
-            if [ "$STATUS_STEP_PUSH_OR" = 0 ]
+            echo -e "\n#### STATUS_STEP_PUSH ###"
+            if [ "$STATUS_STEP_PUSH" = 0 ]
             then
               echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
-              MAILMSG+="$MSG_STEP_PUSH_OR\n"
+              MAILMSG+="$MSG_STEP_PUSH\n"
               CONTINUE=0
             else
               echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
@@ -324,11 +346,11 @@ jobs:
 
           if [ "$CONTINUE" = 1 ]
           then          
-            echo -e "\n#### STATUS_STEP_SET_EX ###"
-            if [ "$STATUS_STEP_PUSH_OR" = 0 ]
+            echo -e "\n#### STATUS_STEP_CREATE_RELEASE ###"
+            if [ "$STATUS_STEP_CREATE_RELEASE" = 0 ]
             then
               echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
-              MAILMSG+="$MSG_STEP_PUSH_OR\n"
+              MAILMSG+="$MSG_STEP_CREATE_RELEASE\n"
               CONTINUE=0
             else
               echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
@@ -341,12 +363,25 @@ jobs:
             if [ "$STATUS_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS" = 0 ]
             then
               echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
-              MAILMSG+="$MSG_STEP_PUSH_OR\n"
+              MAILMSG+="$MSG_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS\n"
               CONTINUE=0
             else
               echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
             fi
           fi         
+
+          if [ "$CONTINUE" = 1 ]
+          then          
+            echo -e "\n#### STATUS_STEP_PUSH_OR ###"
+            if [ "$STATUS_STEP_PUSH_OR" = 0 ]
+            then
+              echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
+              MAILMSG+="$MSG_STEP_PUSH_OR\n"
+              CONTINUE=0
+            else
+              echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
+            fi
+          fi          
 
           # Send email 
           if [ "$CONTINUE" = 0 ] 
