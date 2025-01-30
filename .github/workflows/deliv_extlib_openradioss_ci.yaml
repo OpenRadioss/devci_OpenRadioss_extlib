@@ -164,7 +164,7 @@ jobs:
           echo "-------"      
 
           # # Opensource libs
-          # jf rt download ${JF_OPTIONS} --flat=true --recursive --exclusions="*/_com/*" "${{ env.HM_REMOTE_DIR }}/(*)" ${HMREADER_OPENSOURCE_LOCAL_DIR}/{1}
+          jf rt download ${JF_OPTIONS} --flat=true --recursive --exclusions="*/_com/*" "${{ env.HM_REMOTE_DIR }}/(*)" ${HMREADER_OPENSOURCE_LOCAL_DIR}/{1}
 
           # Get current version in VERSION_FILE
           current_version=$(grep -oP 'extlib v\K[0-9]+' ${{ env.VERSION_FILE }})
@@ -177,7 +177,9 @@ jobs:
           git config --global user.email "${{ env.GIT_SERVBOT_EMAIL }}"
           git config --global user.name "${{ env.GIT_SERVBOT_USER }}"
           git add ${{ env.VERSION_FILE }}
+          echo "---status----" 
           git status
+          echo "---status----" 
 
           git commit -m "Update extlib version to v${current_version}"
 
