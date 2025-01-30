@@ -23,7 +23,7 @@ env:
   JF_OPTIONS: "--url=${{ secrets.JFROG_DELIVERY_URL }} --user=${{ secrets.JFROG_DELIVERY_USER }} --password=${{ secrets.JFROG_DELIVERY_TOKEN }}"
   MAIL_CONFIG_FILE: "/etc/mail.rc"
   MAIL_COMMAND: "Mail"
-  VERSION_FILE: "EXTLIB_VERSION"
+  VERSION_FILE: "EXTLIB_VERSION.txt"
 
 jobs:
 
