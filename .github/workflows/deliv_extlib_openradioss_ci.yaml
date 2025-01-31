@@ -63,6 +63,8 @@ jobs:
       MSG_STEP_CREATE_RELEASE: "Could not create release on repository"
       STATUS_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS: 0
       MSG_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS: "Could not set extlib version in OpenRadioss repository"     
+      STATUS_STEP_TRIGGER_OR: 0
+      MSG_STEP_TRIGGER_OR: "Could not trigger OpenRadioss CI"
       HMREADER_OPENSOURCE_LOCAL_DIR: "extlib/hm_reader"
 
     steps:
@@ -247,6 +249,12 @@ jobs:
           event-type: 'extlib-update'
           client-payload: '{"ref": "${{ github.ref }}", "version": "${{ env.EXTLIB_VERSION }}", "url": "${{ env.EXTLIB_URL }}"}'
 
+      - name: Trigger OpenRadioss CI to set extlib version
+        working-directory: ${{ env.WORKDIR }}
+        run: |    
+          # Set correct end of step status (if not an email will be sent)
+          echo "STATUS_STEP_TRIGGER_OR=1" >> $GITHUB_ENV
+
       # # Get clone of OpenRadioss
       # - name: Checkout git sources
       #   uses: actions/checkout@v4
@@ -377,6 +385,19 @@ jobs:
             then
               echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
               MAILMSG+="$MSG_STEP_CREATE_RELEASE\n"
+              CONTINUE=0
+            else
+              echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
+            fi
+          fi    
+
+          if [ "$CONTINUE" = 1 ]
+          then          
+            echo -e "\n#### STATUS_STEP_TRIGGER_OR ###"
+            if [ "$STATUS_STEP_TRIGGER_OR" = 0 ]
+            then
+              echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
+              MAILMSG+="$MSG_STEP_TRIGGER_OR\n"
               CONTINUE=0
             else
               echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
