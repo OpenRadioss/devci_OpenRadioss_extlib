@@ -250,7 +250,7 @@ jobs:
           # DEV ONLY #
           repository: 'OpenRadioss/devci_OpenRadioss'
           event-type: 'extlib-update'
-          client-payload: '{"ref": "${{ github.ref }}", "version": "${{ env.EXTLIB_VERSION }}", "url": "${{ env.EXTLIB_URL }}"}'
+          client-payload: '{"ref": "${{ github.ref }}", "version": "${{ env.EXTLIB_VERSION }}", "delivery_date": "${{ env.CURRENT_DATE }}","url": "${{ env.EXTLIB_URL }}"}'
 
       - name: Trigger OpenRadioss CI to set extlib version
         working-directory: ${{ env.WORKDIR }}
