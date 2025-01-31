@@ -222,7 +222,6 @@ jobs:
         uses: docker://ghcr.io/mini-bomba/create-github-release:v1.2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          release: "Extlib v${{ env.EXTLIB_VERSION }}"
           tag: "v${{ env.EXTLIB_VERSION }}"
           name: "Extlib v${{ env.EXTLIB_VERSION }}"            
           body: |
