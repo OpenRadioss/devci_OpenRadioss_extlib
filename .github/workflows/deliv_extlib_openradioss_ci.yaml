@@ -167,15 +167,18 @@ jobs:
           # # Opensource libs
           jf rt download ${JF_OPTIONS} --flat=true --recursive --exclusions="*/_com/*" "${{ env.HM_REMOTE_DIR }}/(*)" ${HMREADER_OPENSOURCE_LOCAL_DIR}/{1}
 
+          # Get current date in YYYY-MM-DD format
+          current_date=$(date +%F)
+
           # Get current version in VERSION_FILE
           current_version=$(grep -oP '"version"\s*:\s*"\K[^"]+' ${{ env.VERSION_FILE }})
           current_version=$((current_version + 1))
           echo "Current version is: ${current_version}"
           asset_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/v${current_version}/extlib.zip"
-          echo "{ \"version\":\"${current_version}\",\"url\":\"${asset_url}\"}" > ${{ env.VERSION_FILE }}
+          echo "{ \"version\":\"${current_version}\",\"delivery_date\":\"${current_date}\",\"url\":\"${asset_url}\"}" > ${{ env.VERSION_FILE }}
           echo "EXTLIB_VERSION=${current_version}" >> $GITHUB_ENV
           echo "EXTLIB_URL=${asset_url}" >> $GITHUB_ENV
-
+          echo "CURRENT_DATE=${current_date}" >> $GITHUB_ENV
 
           # Add new files
           git config --global user.email "${{ env.GIT_SERVBOT_EMAIL }}"
@@ -227,7 +230,7 @@ jobs:
           tag: "v${{ env.EXTLIB_VERSION }}"
           name: "Extlib v${{ env.EXTLIB_VERSION }}"            
           body: |
-            Find here last ext libs for radioss including hmreader
+            Find here last ext libs for radioss including hmreader in version v${{ env.EXTLIB_VERSION }} deliverd on ${{ env.CURRENT_DATE }}
           files: |
             extlib.zip
           clear_attachments: true    
