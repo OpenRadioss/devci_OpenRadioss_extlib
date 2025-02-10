@@ -27,6 +27,7 @@ env:
   MAIL_CONFIG_FILE: "/etc/mail.rc"
   MAIL_COMMAND: "Mail"
   VERSION_FILE: "EXTLIB_VERSION.json"
+  HMREADER_LAST_COMMIT_ID_FILE: ".last_hmreader_commit_id"
 
 jobs:
 
@@ -80,8 +81,11 @@ jobs:
 
           if [[ "${{ github.event_name }}" == "push" ]]; then
             echo "This is a push event."
+            echo "Getting last hmreader commit id from Jrog"
+            jf rt download ${JF_OPTIONS} --flat=true ${HW_SOLVER_PREFIX}/${HMREADER_PREFIX}/${BRANCH_NAME}/${HMREADER_LAST_COMMIT_ID_FILE} .
+            DELIV_COMMIT=$(cat ${HMREADER_LAST_COMMIT_ID_FILE})
           else
-            echo "This a workflow_dispatch event."
+            echo "Getting hmreader commit id from input : ${DELIV_COMMIT}"
           fi
 
           echo "DELIV_COMMIT = ${DELIV_COMMIT}"
