@@ -9,10 +9,10 @@ on:
       - main 
       
   workflow_dispatch:
-  inputs:
-    deliv_commit:
-      description: 'The commit related to the hmreader libraries we want to deliver'
-      required: true
+    inputs:
+      deliv_commit:
+        description: 'The commit related to the hmreader libraries we want to deliver'
+        required: true
 
 env:
   DELIV_COMMIT: ${{ github.event.inputs.deliv_commit }}
