@@ -13,7 +13,8 @@ on:
 env:
   DELIV_COMMIT: ${{ github.event.inputs.deliv_commit }}
   FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
-  TO_EMAIL: ${{ secrets.TO_EMAIL }}
+  # TO_EMAIL: ${{ secrets.TO_EMAIL }}
+  TO_EMAIL: "mquinzin@altair.com"
   MAIL_RELAY: ${{ secrets.MAIL_RELAY }}
   CI: 'true'  # if true, disables interactive prompts and progress bar  
   JFROG_CLI_LOG_LEVEL: "ERROR"
