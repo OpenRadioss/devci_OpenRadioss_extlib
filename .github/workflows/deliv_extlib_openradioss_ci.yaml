@@ -1,6 +1,6 @@
-name: Delivery extlib (incl HMReader from JF) as assets in release
+name: Delivery extlib (incl HMReader from JF) as assets in a release
 
-# This CI is triggerd by Gitlab Radioss CI to get libhmreader from Jfrog, extlib locally, and set the new version to use into OpenRadioss
+# This CI is triggerd by Gitlab Radioss CI to get libhmreader from Jfrog, extlib locally, provide them as a release asset, and set the new version to use into OpenRadioss
 
 on:
 
@@ -13,9 +13,7 @@ on:
 env:
   DELIV_COMMIT: ${{ github.event.inputs.deliv_commit }}
   FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
-  # DEV ONLY #
-  # TO_EMAIL: ${{ secrets.TO_EMAIL }}
-  TO_EMAIL: "mquinzin@altair.com"
+  TO_EMAIL: ${{ secrets.TO_EMAIL }}
   MAIL_RELAY: ${{ secrets.MAIL_RELAY }}
   CI: 'true'  # if true, disables interactive prompts and progress bar  
   JFROG_CLI_LOG_LEVEL: "ERROR"
@@ -31,7 +29,7 @@ jobs:
     if: ${{ github.repository_owner == 'OpenRadioss' }}
     # DEV ONLY # runs-on: ["dev_delivery","dev"] 
     # runs-on: ["delivery","prod"]
-    runs-on: ["dev_delivery","dev"] 
+    runs-on: ["dev_delivery","dev"]
     container: 
       image: fr-qafactorydev.europe.altair.com/common-linux64
       credentials: 
@@ -43,7 +41,7 @@ jobs:
     env:
       HW_SOLVER_PREFIX: ${{ secrets.JFROG_DELIVERY_RADIOSS_REPO }}
       HMREADER_PREFIX: "hm_reader"
-      # Needed by gh auth
+      HMREADER_OPENSOURCE_LOCAL_DIR: "extlib/hm_reader"
       GIT_PUSH_SERVBOT_PAT: ${{ secrets.GIT_PUSH_SERVBOT_PAT }}
       GO_PUSH: 0
       GO_PUSH_OR: 0   
@@ -65,7 +63,6 @@ jobs:
       MSG_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS: "Could not set extlib version in OpenRadioss repository"     
       STATUS_STEP_TRIGGER_OR: 0
       MSG_STEP_TRIGGER_OR: "Could not trigger OpenRadioss CI"
-      HMREADER_OPENSOURCE_LOCAL_DIR: "extlib/hm_reader"
 
     steps:
 
@@ -75,12 +72,10 @@ jobs:
           export BRANCH_NAME="${GITHUB_REF#refs/heads/}"
 
           echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
-
-          # DEV ONLY #
-          # export BRANCH_NAME="dev/ci/hm_reader_intermediate"
           
           export HM_REMOTE_DIR="${HW_SOLVER_PREFIX}/${HMREADER_PREFIX}/${BRANCH_NAME}/${DELIV_COMMIT}"
           echo "HM_REMOTE_DIR=${HM_REMOTE_DIR}" >> $GITHUB_ENV
+
           # Check if the commit exist on jfrog
           result_hm=$(jf rt s ${JF_OPTIONS} "${HM_REMOTE_DIR}/*")
 
@@ -159,7 +154,6 @@ jobs:
           # Force local branch to point on same commit as remote branch, way to restore a correct env if old push failed before
           git fetch origin ${BRANCH_NAME}
           git reset --hard origin/${BRANCH_NAME}
-          # git lfs install
           echo "-------checkout"
           git branch && git log --pretty=oneline -n 5
           echo "-------"      
@@ -203,9 +197,6 @@ jobs:
             exit 1
           fi
 
-          # # TO REMOVE
-          # echo "STATUS_STEP_GET_LIBS=1" >> $GITHUB_ENV
-
       - name: Push changes
         uses: ad-m/github-push-action@master
         if: ${{ env.GO_PUSH == 1 }} 
@@ -241,88 +232,20 @@ jobs:
           # Set correct end of step status (if not an email will be sent)
           echo "STATUS_STEP_CREATE_RELEASE=1" >> $GITHUB_ENV
 
-      # Trigger OpenRadioss CI to set the new version of extlib and cause a build/qa
-      - name: Trigger OpenRadioss CI
-        uses: peter-evans/repository-dispatch@v1
-        with:
-          token: ${{ env.GIT_PUSH_SERVBOT_PAT }}
-          # repository: '${{ secrets.OPENRADIOSS_REPOSITORY }}'
-          # DEV ONLY #
-          repository: 'OpenRadioss/devci_OpenRadioss'
-          event-type: 'extlib-update'
-          client-payload: '{"ref": "${{ github.ref }}", "version": "${{ env.EXTLIB_VERSION }}", "delivery_date": "${{ env.CURRENT_DATE }}","url": "${{ env.EXTLIB_URL }}"}'
-
-      - name: Trigger OpenRadioss CI to set extlib version
-        working-directory: ${{ env.WORKDIR }}
-        run: |    
-          # Set correct end of step status (if not an email will be sent)
-          echo "STATUS_STEP_TRIGGER_OR=1" >> $GITHUB_ENV
-
-      # # Get clone of OpenRadioss
-      # - name: Checkout git sources
-      #   uses: actions/checkout@v4
+      # # Trigger OpenRadioss CI to set the new version of extlib and cause a build/qa
+      # - name: Trigger OpenRadioss CI
+      #   uses: peter-evans/repository-dispatch@v1
       #   with:
-      #     path: ${{ env.WORKDIR_OR }}
-      #     clean: 'true'
-      #     # Use a PAT else the push won't trigger the next workflow
-      #     # DEV ONLY #
-      #     # repository: '${{ secrets.OPENRADIOSS_REPOSITORY }}'
-      #     repository: 'OpenRadioss/devci_OpenRadioss'
-      #     token: ${{ env.GIT_PUSH_SERVBOT_PAT }}     
+      #     token: ${{ env.GIT_PUSH_SERVBOT_PAT }}
+      #     repository: '${{ secrets.OPENRADIOSS_REPOSITORY }}'
+      #     event-type: 'extlib-update'
+      #     client-payload: '{"ref": "${{ github.ref }}", "version": "${{ env.EXTLIB_VERSION }}", "delivery_date": "${{ env.CURRENT_DATE }}","url": "${{ env.EXTLIB_URL }}"}'
 
-      # - name: Set extlib version in OpenRadiossRadioss repo
-      #   working-directory: ${{ env.WORKDIR_OR }}
-      #   run: |
-      #     # Force local branch to point on same commit as remote branch, way to restore a correct env if old push failed before
-      #     git fetch origin ${BRANCH_NAME}
-      #     git reset --hard origin/${BRANCH_NAME}
-      #     # git lfs install
-      #     echo "-------checkout"
-      #     git branch && git log --pretty=oneline -n 5
-      #     echo "-------"      
-
-      #     # Add new files
-      #     git config --global user.email "${{ env.GIT_SERVBOT_EMAIL }}"
-      #     git config --global user.name "${{ env.GIT_SERVBOT_USER }}"
-      #     echo "extlib v$EXTLIB_VERSION" > ${{ env.VERSION_FILE }}
-      #     echo "-------"  
-      #     git add ${{ env.VERSION_FILE }}
-      #     echo "----stat---"  
-      #     git status
-      #     echo "-------"  
-
-      #     echo "---commit----"  
-      #     git commit -m "Update extlib version to v${current_version}"
-      #     echo "-------"  
-
-      #     if [[ -n $(git status --porcelain) ]]; then
-      #       # Set correct end of step status (if not an email will be sent)
-      #       echo "STATUS_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS=1" >> $GITHUB_ENV
-      #       echo "GO_PUSH_OR=1" >> $GITHUB_ENV
-      #     else
-      #       echo "There are no changes in the repository, abort."
-      #       exit 1
-      #     fi
-
-      # - name: Set exlib version in openradioss status
+      # - name: Trigger OpenRadioss CI to set extlib version
       #   working-directory: ${{ env.WORKDIR }}
       #   run: |    
       #     # Set correct end of step status (if not an email will be sent)
-      #     echo "STATUS_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS=1" >> $GITHUB_ENV
-
-      # - name: Push changes in OpenRadioss
-      #   uses: ad-m/github-push-action@master
-      #   if: ${{ env.GO_PUSH_OR == 1 }} 
-      #   with:
-      #     github_token: ${{ env.GIT_PUSH_SERVBOT_PAT }}
-      #     branch: 'main'     
-      #     directory: ${{ env.WORKDIR_OR }}    
-
-      # - name: Set push status in OpenRadioss
-      #   working-directory: ${{ env.WORKDIR }}
-      #   run: |    
-      #     # Set correct end of step status (if not an email will be sent)
-      #     echo "STATUS_STEP_PUSH_OR=1" >> $GITHUB_ENV
+      #     echo "STATUS_STEP_TRIGGER_OR=1" >> $GITHUB_ENV
 
       - name: Managing step execution
         if: ${{ always() }}
@@ -392,46 +315,20 @@ jobs:
             else
               echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
             fi
-          fi    
-
-          if [ "$CONTINUE" = 1 ]
-          then          
-            echo -e "\n#### STATUS_STEP_TRIGGER_OR ###"
-            if [ "$STATUS_STEP_TRIGGER_OR" = 0 ]
-            then
-              echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
-              MAILMSG+="$MSG_STEP_TRIGGER_OR\n"
-              CONTINUE=0
-            else
-              echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
-            fi
-          fi    
+          fi          
 
           # if [ "$CONTINUE" = 1 ]
           # then          
-          #   echo -e "\n#### STATUS_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS ###"
-          #   if [ "$STATUS_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS" = 0 ]
+          #   echo -e "\n#### STATUS_STEP_TRIGGER_OR ###"
+          #   if [ "$STATUS_STEP_TRIGGER_OR" = 0 ]
           #   then
           #     echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
-          #     MAILMSG+="$MSG_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS\n"
+          #     MAILMSG+="$MSG_STEP_TRIGGER_OR\n"
           #     CONTINUE=0
           #   else
           #     echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
           #   fi
-          # fi         
-
-          # if [ "$CONTINUE" = 1 ]
-          # then          
-          #   echo -e "\n#### STATUS_STEP_PUSH_OR ###"
-          #   if [ "$STATUS_STEP_PUSH_OR" = 0 ]
-          #   then
-          #     echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
-          #     MAILMSG+="$MSG_STEP_PUSH_OR\n"
-          #     CONTINUE=0
-          #   else
-          #     echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
-          #   fi
-          # fi          
+          # fi    
 
           # Send email 
           if [ "$CONTINUE" = 0 ] 
