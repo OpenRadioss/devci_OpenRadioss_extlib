@@ -8,7 +8,7 @@ on:
   push:
     branches:
       - main 
-      
+
   workflow_dispatch:
     inputs:
       deliv_commit:
@@ -19,7 +19,7 @@ env:
   DELIV_COMMIT: ${{ github.event.inputs.deliv_commit }}
   FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
   TO_EMAIL: ${{ secrets.TO_EMAIL }}
-  # MAIL_RELAY: ${{ secrets.MAIL_RELAY }}
+  MAIL_RELAY: ${{ secrets.MAIL_RELAY }}
   CI: 'true'  # if true, disables interactive prompts and progress bar  
   JFROG_CLI_LOG_LEVEL: "ERROR"
   JFROG_CLI_AVOID_NEW_VERSION_WARNING: "true"
@@ -27,7 +27,6 @@ env:
   MAIL_CONFIG_FILE: "/etc/mail.rc"
   MAIL_COMMAND: "Mail"
   VERSION_FILE: "EXTLIB_VERSION.json"
-  HMREADER_LAST_COMMIT_ID_FILE: ".last_hmreader_commit_id"
 
 jobs:
 
@@ -68,6 +67,7 @@ jobs:
       MSG_STEP_SET_EXLIB_VERSION_IN_OPENRADIOSS: "Could not set extlib version in OpenRadioss repository"     
       STATUS_STEP_TRIGGER_OR: 0
       MSG_STEP_TRIGGER_OR: "Could not trigger OpenRadioss CI"
+      HMREADER_LAST_COMMIT_ID_FILE: ".last_hmreader_commit_id"
 
     steps:
 
@@ -88,7 +88,7 @@ jobs:
           fi
 
           echo "DELIV_COMMIT = ${DELIV_COMMIT}"
-          
+
           export HM_REMOTE_DIR="${HW_SOLVER_PREFIX}/${HMREADER_PREFIX}/${BRANCH_NAME}/${DELIV_COMMIT}"
           echo "HM_REMOTE_DIR=${HM_REMOTE_DIR}" >> $GITHUB_ENV
 
