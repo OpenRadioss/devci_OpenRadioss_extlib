@@ -9,6 +9,7 @@ on:
     branches:
       - main 
     paths:
+      - '**'
       - '!EXTLIB_VERSION.json'
 
   workflow_dispatch:
