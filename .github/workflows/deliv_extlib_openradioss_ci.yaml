@@ -6,6 +6,10 @@ name: Delivery extlib (incl HMReader from JF) as assets in a release
 on:
 
   push:
+    exclude_paths:
+      - ${{ env.VERSION_FILE }}
+
+  push:
     branches:
       - main 
 
@@ -72,6 +76,8 @@ jobs:
       HMREADER_LAST_COMMIT_ID_FILE: ".last_hmreader_commit_id"
 
     steps:
+
+
 
       - name: Checking delivery commit
         run: |
