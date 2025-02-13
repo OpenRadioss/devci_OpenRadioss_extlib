@@ -8,8 +8,8 @@ on:
   push:
     branches:
       - main 
-    exclude_paths:
-      - 'EXTLIB_VERSION.json'
+    paths:
+      - '!EXTLIB_VERSION.json'
 
   workflow_dispatch:
     inputs:
