@@ -6,12 +6,10 @@ name: Delivery extlib (incl HMReader from JF) as assets in a release
 on:
 
   push:
-    exclude_paths:
-      - ${{ env.VERSION_FILE }}
-
-  push:
     branches:
       - main 
+    exclude_paths:
+      - ${{ env.VERSION_FILE }}
 
   workflow_dispatch:
     inputs:
