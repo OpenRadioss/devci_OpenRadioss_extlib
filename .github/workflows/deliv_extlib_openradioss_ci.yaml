@@ -260,7 +260,7 @@ jobs:
           token: ${{ env.GIT_PUSH_SERVBOT_PAT }}
           repository: 'OpenRadioss/devci_OpenRadioss'
           event-type: 'extlib-update'
-          client-payload: '{"ref": "${{ github.ref }}", "extlib_version": "100.56}"}'
+          client-payload: '{"ref": "${{ github.ref }}", "extlib_version": "100.56"}'
 
       # - name: Trigger OpenRadioss CI to set extlib version
       #   working-directory: ${{ env.WORKDIR }}
