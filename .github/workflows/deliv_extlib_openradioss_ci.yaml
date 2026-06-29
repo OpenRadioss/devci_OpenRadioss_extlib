@@ -23,7 +23,7 @@ env:
   DELIV_COMMIT: ${{ github.event.inputs.deliv_commit }}
   FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
   # TO_EMAIL: ${{ secrets.TO_EMAIL }}
-  TO_EMAIL: "maxime.quinzin@siemens.com"
+  TO_EMAAIL: "maxime.quinzin@siemens.com"
   MAIL_RELAY: ${{ secrets.MAIL_RELAY }}
   CI: 'true'  # if true, disables interactive prompts and progress bar  
   JFROG_CLI_LOG_LEVEL: "ERROR"
@@ -86,80 +86,80 @@ jobs:
 
           echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
 
-          if [[ "${{ github.event_name }}" == "push" ]]; then
-            echo "This is a push event."
-            echo "Getting last hmreader commit id from Jrog"
-            jf rt download ${JF_OPTIONS} --flat=true ${HW_SOLVER_PREFIX}/${HMREADER_PREFIX}/${BRANCH_NAME}/${HMREADER_LAST_COMMIT_ID_FILE} .
-            DELIV_COMMIT=$(cat ${HMREADER_LAST_COMMIT_ID_FILE})
-          else
-            echo "Getting hmreader commit id from input : ${DELIV_COMMIT}"
-          fi
+      #     if [[ "${{ github.event_name }}" == "push" ]]; then
+      #       echo "This is a push event."
+      #       echo "Getting last hmreader commit id from Jrog"
+      #       jf rt download ${JF_OPTIONS} --flat=true ${HW_SOLVER_PREFIX}/${HMREADER_PREFIX}/${BRANCH_NAME}/${HMREADER_LAST_COMMIT_ID_FILE} .
+      #       DELIV_COMMIT=$(cat ${HMREADER_LAST_COMMIT_ID_FILE})
+      #     else
+      #       echo "Getting hmreader commit id from input : ${DELIV_COMMIT}"
+      #     fi
 
-          echo "DELIV_COMMIT = ${DELIV_COMMIT}"
+      #     echo "DELIV_COMMIT = ${DELIV_COMMIT}"
 
-          export HM_REMOTE_DIR="${HW_SOLVER_PREFIX}/${HMREADER_PREFIX}/${BRANCH_NAME}/${DELIV_COMMIT}"
-          echo "HM_REMOTE_DIR=${HM_REMOTE_DIR}" >> $GITHUB_ENV
+      #     export HM_REMOTE_DIR="${HW_SOLVER_PREFIX}/${HMREADER_PREFIX}/${BRANCH_NAME}/${DELIV_COMMIT}"
+      #     echo "HM_REMOTE_DIR=${HM_REMOTE_DIR}" >> $GITHUB_ENV
 
-          # Check if the commit exist on jfrog
-          result_hm=$(jf rt s ${JF_OPTIONS} "${HM_REMOTE_DIR}/*")
+      #     # Check if the commit exist on jfrog
+      #     result_hm=$(jf rt s ${JF_OPTIONS} "${HM_REMOTE_DIR}/*")
 
-          if [[ "${result_hm}" == "[]" ]]
-          then
-            echo "Commit ${DELIV_COMMIT} does not exist on Jfrog."
-            exit 1
-          fi
+      #     if [[ "${result_hm}" == "[]" ]]
+      #     then
+      #       echo "Commit ${DELIV_COMMIT} does not exist on Jfrog."
+      #       exit 1
+      #     fi
 
-          # Set correct end of step status (if not an email will be sent)
-          echo "STATUS_STEP_CHECK_DELIV_COMMIT=1" >> $GITHUB_ENV          
+      #     # Set correct end of step status (if not an email will be sent)
+      #     echo "STATUS_STEP_CHECK_DELIV_COMMIT=1" >> $GITHUB_ENV          
 
-      - name: Check all libs are present
-        run: |     
-          echo "-------------------------"
-          echo "Verify libraries on jfrog"
-          echo "-------------------------"
+      # - name: Check all libs are present
+      #   run: |     
+      #     echo "-------------------------"
+      #     echo "Verify libraries on jfrog"
+      #     echo "-------------------------"
 
-          patterns=(
-            "linux64/libhm_reader_linux64.so"
-            "linuxa64/libhm_reader_linuxa64.so"
-            "win64/hm_reader_win64.lib"
-            "win64/hm_reader_win64.dll"
-          )
+      #     patterns=(
+      #       "linux64/libhm_reader_linux64.so"
+      #       "linuxa64/libhm_reader_linuxa64.so"
+      #       "win64/hm_reader_win64.lib"
+      #       "win64/hm_reader_win64.dll"
+      #     )
 
-          result_array=$(jf rt search ${JF_OPTIONS} ${{ env.HM_REMOTE_DIR }}/* | grep '"path":' | sed 's/.*"path": "//' | sed 's/",//')
+      #     result_array=$(jf rt search ${JF_OPTIONS} ${{ env.HM_REMOTE_DIR }}/* | grep '"path":' | sed 's/.*"path": "//' | sed 's/",//')
 
-          all_found=true
-          not_found_libs=''
+      #     all_found=true
+      #     not_found_libs=''
 
-          # Loop through each pattern
-          for pattern in "${patterns[@]}"; do
-              # Check if the pattern is present in any line
-              found=false
-              for line in "${result_array[@]}"; do
-                  if echo "$line" | grep -q "$pattern"; then
-                      found=true
-                      break
-                  fi
-              done
+      #     # Loop through each pattern
+      #     for pattern in "${patterns[@]}"; do
+      #         # Check if the pattern is present in any line
+      #         found=false
+      #         for line in "${result_array[@]}"; do
+      #             if echo "$line" | grep -q "$pattern"; then
+      #                 found=true
+      #                 break
+      #             fi
+      #         done
 
-              # If the pattern was not found in any line, mark as not all found
-              if ! $found; then
-                  # echo "Pattern '$pattern' not found in any line."
-                  not_found_libs+="\n${pattern}"
-                  all_found=false
-              # else
-              #     echo "Pattern '$pattern' found."
-              fi
-          done
+      #         # If the pattern was not found in any line, mark as not all found
+      #         if ! $found; then
+      #             # echo "Pattern '$pattern' not found in any line."
+      #             not_found_libs+="\n${pattern}"
+      #             all_found=false
+      #         # else
+      #         #     echo "Pattern '$pattern' found."
+      #         fi
+      #     done
 
-          # Final result check
-          if $all_found; then
-              echo -e "\nAll librarie have been found!"
-              # Set correct end of step status (if not an email will be sent)
-              echo "STATUS_STEP_CHECK_LIBS=1" >> $GITHUB_ENV
-          else
-              echo -e "\nSome librariy pattern has not been found:\n${not_found_libs}"
-              exit 1
-          fi
+      #     # Final result check
+      #     if $all_found; then
+      #         echo -e "\nAll librarie have been found!"
+      #         # Set correct end of step status (if not an email will be sent)
+      #         echo "STATUS_STEP_CHECK_LIBS=1" >> $GITHUB_ENV
+      #     else
+      #         echo -e "\nSome librariy pattern has not been found:\n${not_found_libs}"
+      #         exit 1
+      #     fi
 
       # Get last git modifications
       - name: Checkout git sources
@@ -183,7 +183,7 @@ jobs:
           echo "-------"      
 
           # # Opensource libs
-          jf rt download ${JF_OPTIONS} --flat=true --recursive --exclusions="*/_com/*" "${{ env.HM_REMOTE_DIR }}/(*)" ${HMREADER_OPENSOURCE_LOCAL_DIR}/{1}
+          # jf rt download ${JF_OPTIONS} --flat=true --recursive --exclusions="*/_com/*" "${{ env.HM_REMOTE_DIR }}/(*)" ${HMREADER_OPENSOURCE_LOCAL_DIR}/{1}
 
           # Get current date in YYYY-MM-DD format
           current_date=$(date +%F)
@@ -199,274 +199,276 @@ jobs:
           echo "CURRENT_DATE=${current_date}" >> $GITHUB_ENV
 
           # Add new files
-          git config --global user.email "${{ env.GIT_SERVBOT_EMAIL }}"
-          git config --global user.name "${{ env.GIT_SERVBOT_USER }}"
-          git add ${{ env.VERSION_FILE }}
-          echo "---status----" 
-          git status
-          echo "---status----" 
+          # git config --global user.email "${{ env.GIT_SERVBOT_EMAIL }}"
+          # git config --global user.name "${{ env.GIT_SERVBOT_USER }}"
+          # git add ${{ env.VERSION_FILE }}
+          # echo "---status----" 
+          # git status
+          # echo "---status----" 
 
-          git commit -m "Update extlib version to v${current_version}"
+          echo "Committing new version file to v${current_version}"
 
-          # Create zip for asset
-          cp ${{ env.VERSION_FILE }} extlib/
-          zip -r extlib.zip extlib
+      #     git commit -m "Update extlib version to v${current_version}"
 
-          if [[ -n $(git status --porcelain) ]]; then
-            # Set correct end of step status (if not an email will be sent)
-            echo "STATUS_STEP_GET_LIBS=1" >> $GITHUB_ENV
-            echo "GO_PUSH=1" >> $GITHUB_ENV
-          else
-            echo "There are no changes in the repository, abort."
-            exit 1
-          fi
+      #     # Create zip for asset
+      #     cp ${{ env.VERSION_FILE }} extlib/
+      #     zip -r extlib.zip extlib
 
-      - name: Push changes
-        uses: ad-m/github-push-action@master
-        if: ${{ env.GO_PUSH == 1 }} 
-        with:
-          github_token: ${{ env.GIT_PUSH_SERVBOT_PAT }}
-          branch: ${{ github.ref }}     
+      #     if [[ -n $(git status --porcelain) ]]; then
+      #       # Set correct end of step status (if not an email will be sent)
+      #       echo "STATUS_STEP_GET_LIBS=1" >> $GITHUB_ENV
+      #       echo "GO_PUSH=1" >> $GITHUB_ENV
+      #     else
+      #       echo "There are no changes in the repository, abort."
+      #       exit 1
+      #     fi
 
-      - name: Set push status
-        run: |    
-          # Set correct end of step status (if not an email will be sent)
-          echo "STATUS_STEP_PUSH=1" >> $GITHUB_ENV
+      # - name: Push changes
+      #   uses: ad-m/github-push-action@master
+      #   if: ${{ env.GO_PUSH == 1 }} 
+      #   with:
+      #     github_token: ${{ env.GIT_PUSH_SERVBOT_PAT }}
+      #     branch: ${{ github.ref }}     
 
-      - name: Create fake extlib for testing
-        run: |    
-          rm -rf extlib
-          mkdir -p extlib
-          echo "File 1" > extlib/file1.txt
-          echo "File 2" > extlib/file2.txt
-          zip -r extlib.zip extlib
-          echo "STATUS_STEP_PUSH=1" >> $GITHUB_ENV  
-          echo "EXTLIB_VERSION=36" >> $GITHUB_ENV    
+      # - name: Set push status
+      #   run: |    
+      #     # Set correct end of step status (if not an email will be sent)
+      #     echo "STATUS_STEP_PUSH=1" >> $GITHUB_ENV
 
-      # The action creates the release with an already existing tag (latest-xxxxx) so we use option skip_tag_creation: true
-      # We do this because we have already checkouted the wanted commit before
-      # Prerequisite: create the tag with command : git tag latest-YYYMMDD <commit id>; git push origin latest-YYYMMDD
-      - name: Release the new binaries
-        uses: docker://ghcr.io/mini-bomba/create-github-release:v1.2.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          tag: "v${{ env.EXTLIB_VERSION }}"
-          name: "Extlib v${{ env.EXTLIB_VERSION }}"            
-          body: |
-            Find here last ext libs for radioss including hmreader in version v${{ env.EXTLIB_VERSION }} delivered on ${{ env.CURRENT_DATE }}
-          files: |
-            extlib.zip
-          clear_attachments: true    
+      # - name: Create fake extlib for testing
+      #   run: |    
+      #     rm -rf extlib
+      #     mkdir -p extlib
+      #     echo "File 1" > extlib/file1.txt
+      #     echo "File 2" > extlib/file2.txt
+      #     zip -r extlib.zip extlib
+      #     echo "STATUS_STEP_PUSH=1" >> $GITHUB_ENV  
+      #     echo "EXTLIB_VERSION=36" >> $GITHUB_ENV    
 
-      - name: Set release creation status
-        run: |    
-          # Set correct end of step status (if not an email will be sent)
-          echo "STATUS_STEP_CREATE_RELEASE=1" >> $GITHUB_ENV
+      # # The action creates the release with an already existing tag (latest-xxxxx) so we use option skip_tag_creation: true
+      # # We do this because we have already checkouted the wanted commit before
+      # # Prerequisite: create the tag with command : git tag latest-YYYMMDD <commit id>; git push origin latest-YYYMMDD
+      # - name: Release the new binaries
+      #   uses: docker://ghcr.io/mini-bomba/create-github-release:v1.2.0
+      #   with:
+      #     token: ${{ secrets.GITHUB_TOKEN }}
+      #     tag: "v${{ env.EXTLIB_VERSION }}"
+      #     name: "Extlib v${{ env.EXTLIB_VERSION }}"            
+      #     body: |
+      #       Find here last ext libs for radioss including hmreader in version v${{ env.EXTLIB_VERSION }} delivered on ${{ env.CURRENT_DATE }}
+      #     files: |
+      #       extlib.zip
+      #     clear_attachments: true    
 
-      # Trigger OpenRadioss CI to set the new version of extlib and cause a build/qa
-      - name: Trigger OpenRadioss CI
-        uses: peter-evans/repository-dispatch@v4
-        with:
-          token: ${{ env.GIT_PUSH_SERVBOT_PAT }}
-          repository: '${{ secrets.OPENRADIOSS_REPOSITORY }}'
-          event-type: 'extlib-update'
-          client-payload: '{"ref": "${{ github.ref }}", "version": "${{ env.EXTLIB_VERSION }}", "delivery_date": "${{ env.CURRENT_DATE }}","url": "${{ env.EXTLIB_URL }}"}'
+      # - name: Set release creation status
+      #   run: |    
+      #     # Set correct end of step status (if not an email will be sent)
+      #     echo "STATUS_STEP_CREATE_RELEASE=1" >> $GITHUB_ENV
 
-      - name: Trigger OpenRadioss CI to set extlib version
-        run: |    
-          # Set correct end of step status (if not an email will be sent)
-          echo "STATUS_STEP_TRIGGER_OR=1" >> $GITHUB_ENV
+      # # Trigger OpenRadioss CI to set the new version of extlib and cause a build/qa
+      # - name: Trigger OpenRadioss CI
+      #   uses: peter-evans/repository-dispatch@v4
+      #   with:
+      #     token: ${{ env.GIT_PUSH_SERVBOT_PAT }}
+      #     repository: '${{ secrets.OPENRADIOSS_REPOSITORY }}'
+      #     event-type: 'extlib-update'
+      #     client-payload: '{"ref": "${{ github.ref }}", "version": "${{ env.EXTLIB_VERSION }}", "delivery_date": "${{ env.CURRENT_DATE }}","url": "${{ env.EXTLIB_URL }}"}'
 
-      - name: Clean up old releases
-        run: |
-          set +e  # Don't exit on errors
-          CLEAN_FAILED=0
+      # - name: Trigger OpenRadioss CI to set extlib version
+      #   run: |    
+      #     # Set correct end of step status (if not an email will be sent)
+      #     echo "STATUS_STEP_TRIGGER_OR=1" >> $GITHUB_ENV
 
-          # This command exit with 1 even when everything is OK ...
-          gh auth login -h github.com || echo ""
-          gh auth setup-git
-          gh auth status
+      # - name: Clean up old releases
+      #   run: |
+      #     set +e  # Don't exit on errors
+      #     CLEAN_FAILED=0
 
-          CURRENT_DATE=$(date -u +%s)
-          ONE_MONTH_SECONDS=$((30 * 24 * 60 * 60))
-          MIN_RELEASES_TO_KEEP=5
-          RELEASES_DELETED=0
-          RELEASES_KEPT=0
+      #     # This command exit with 1 even when everything is OK ...
+      #     gh auth login -h github.com || echo ""
+      #     gh auth setup-git
+      #     gh auth status
+
+      #     CURRENT_DATE=$(date -u +%s)
+      #     ONE_MONTH_SECONDS=$((30 * 24 * 60 * 60))
+      #     MIN_RELEASES_TO_KEEP=5
+      #     RELEASES_DELETED=0
+      #     RELEASES_KEPT=0
           
-          echo "Fetching all releases..."
+      #     echo "Fetching all releases..."
           
-          # Get all releases sorted by creation date (newest first)
-          RELEASES=$(gh release list --limit 1000 --json createdAt,name,tagName --template '{{range .}}{{.createdAt}},{{.tagName}},{{.name}},{{end}}')
+      #     # Get all releases sorted by creation date (newest first)
+      #     RELEASES=$(gh release list --limit 1000 --json createdAt,name,tagName --template '{{range .}}{{.createdAt}},{{.tagName}},{{.name}},{{end}}')
           
-          # Convert to array
-          IFS=',' read -ra RELEASE_ARRAY <<< "${RELEASES%,}"
+      #     # Convert to array
+      #     IFS=',' read -ra RELEASE_ARRAY <<< "${RELEASES%,}"
           
-          # Process each release
-          for ((i=0; i<${#RELEASE_ARRAY[@]}; i+=3)); do
-            if [ $((i+2)) -ge ${#RELEASE_ARRAY[@]} ]; then
-              break
-            fi
+      #     # Process each release
+      #     for ((i=0; i<${#RELEASE_ARRAY[@]}; i+=3)); do
+      #       if [ $((i+2)) -ge ${#RELEASE_ARRAY[@]} ]; then
+      #         break
+      #       fi
             
-            CREATED_AT="${RELEASE_ARRAY[$i]}"
-            TAG_NAME="${RELEASE_ARRAY[$((i+1))]}"
-            RELEASE_NAME="${RELEASE_ARRAY[$((i+2))]}"
+      #       CREATED_AT="${RELEASE_ARRAY[$i]}"
+      #       TAG_NAME="${RELEASE_ARRAY[$((i+1))]}"
+      #       RELEASE_NAME="${RELEASE_ARRAY[$((i+2))]}"
             
-            # Skip if release name is empty (last element)
-            if [ -z "$TAG_NAME" ]; then
-              break
-            fi
+      #       # Skip if release name is empty (last element)
+      #       if [ -z "$TAG_NAME" ]; then
+      #         break
+      #       fi
             
-            # Keep first 5 releases regardless of age
-            if [ $RELEASES_KEPT -lt $MIN_RELEASES_TO_KEEP ]; then
-              echo "Keeping release: $RELEASE_NAME (tag: $TAG_NAME) - within top 5 most recent"
-              ((RELEASES_KEPT++))
-              continue
-            fi
+      #       # Keep first 5 releases regardless of age
+      #       if [ $RELEASES_KEPT -lt $MIN_RELEASES_TO_KEEP ]; then
+      #         echo "Keeping release: $RELEASE_NAME (tag: $TAG_NAME) - within top 5 most recent"
+      #         ((RELEASES_KEPT++))
+      #         continue
+      #       fi
             
-            # Convert created date to timestamp
-            CREATED_TIMESTAMP=$(date -d "$CREATED_AT" -u +%s 2>/dev/null || echo 0)
+      #       # Convert created date to timestamp
+      #       CREATED_TIMESTAMP=$(date -d "$CREATED_AT" -u +%s 2>/dev/null || echo 0)
             
-            if [ $CREATED_TIMESTAMP -eq 0 ]; then
-              echo "Warning: Could not parse date for $RELEASE_NAME, keeping it"
-              continue
-            fi
+      #       if [ $CREATED_TIMESTAMP -eq 0 ]; then
+      #         echo "Warning: Could not parse date for $RELEASE_NAME, keeping it"
+      #         continue
+      #       fi
             
-            # Calculate age in seconds
-            AGE=$((CURRENT_DATE - CREATED_TIMESTAMP))
+      #       # Calculate age in seconds
+      #       AGE=$((CURRENT_DATE - CREATED_TIMESTAMP))
             
-            # If older than 1 month, delete
-            if [ $AGE -gt $ONE_MONTH_SECONDS ]; then
-              echo "Deleting old release: $RELEASE_NAME (tag: $TAG_NAME) - Age: $((AGE / 86400)) days"
-              if gh release delete "$TAG_NAME" --yes; then
-                ((RELEASES_DELETED++))
-              else
-                echo "Warning: failed to delete release tag $TAG_NAME"
-                CLEAN_FAILED=1
-              fi
-            else
-              echo "Keeping release: $RELEASE_NAME (tag: $TAG_NAME) - Age: $((AGE / 86400)) days (less than 30 days)"
-              ((RELEASES_KEPT++))
-            fi
-          done
+      #       # If older than 1 month, delete
+      #       if [ $AGE -gt $ONE_MONTH_SECONDS ]; then
+      #         echo "Deleting old release: $RELEASE_NAME (tag: $TAG_NAME) - Age: $((AGE / 86400)) days"
+      #         if gh release delete "$TAG_NAME" --yes; then
+      #           ((RELEASES_DELETED++))
+      #         else
+      #           echo "Warning: failed to delete release tag $TAG_NAME"
+      #           CLEAN_FAILED=1
+      #         fi
+      #       else
+      #         echo "Keeping release: $RELEASE_NAME (tag: $TAG_NAME) - Age: $((AGE / 86400)) days (less than 30 days)"
+      #         ((RELEASES_KEPT++))
+      #       fi
+      #     done
           
-          echo "Release cleanup completed: $RELEASES_DELETED deleted, $RELEASES_KEPT kept"
-          if [ "$CLEAN_FAILED" = 0 ]; then
-            echo "STATUS_STEP_CLEAN_RELEASE=1" >> $GITHUB_ENV
-          fi
-        env:
-          GH_TOKEN: ${{ secrets.SERVBOT_PAT }}
+      #     echo "Release cleanup completed: $RELEASES_DELETED deleted, $RELEASES_KEPT kept"
+      #     if [ "$CLEAN_FAILED" = 0 ]; then
+      #       echo "STATUS_STEP_CLEAN_RELEASE=1" >> $GITHUB_ENV
+      #     fi
+      #   env:
+      #     GH_TOKEN: ${{ secrets.SERVBOT_PAT }}
 
-      - name: Managing step execution
-        if: ${{ always() }}
-        run: |
+      # - name: Managing step execution
+      #   if: ${{ always() }}
+      #   run: |
 
-          LOG_PATH="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          MAILMSG="The delivery of hm reader libraries into OpenRadioss repository fails.\n\nFind detail in log page ${LOG_PATH}\n\n"
-          CONTINUE=1
+      #     LOG_PATH="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+      #     MAILMSG="The delivery of hm reader libraries into OpenRadioss repository fails.\n\nFind detail in log page ${LOG_PATH}\n\n"
+      #     CONTINUE=1
 
-          echo -e "\n#### STATUS_STEP_CHECK_DELIV_COMMIT ###"
-          if [ "$STATUS_STEP_CHECK_DELIV_COMMIT" = 0 ]
-          then
-            echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
-            MAILMSG+="$MSG_STEP_CHECK_DELIV_COMMIT\n"
-            CONTINUE=0
-          else
-            echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
-          fi
+      #     echo -e "\n#### STATUS_STEP_CHECK_DELIV_COMMIT ###"
+      #     if [ "$STATUS_STEP_CHECK_DELIV_COMMIT" = 0 ]
+      #     then
+      #       echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
+      #       MAILMSG+="$MSG_STEP_CHECK_DELIV_COMMIT\n"
+      #       CONTINUE=0
+      #     else
+      #       echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
+      #     fi
 
-          if [ "$CONTINUE" = 1 ]
-          then          
-            echo -e "\n#### STATUS_STEP_CHECK_LIBS ###"
-            if [ "$STATUS_STEP_CHECK_LIBS" = 0 ]
-            then
-              echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
-              MAILMSG+="$MSG_STEP_CHECK_LIBS\n"
-              CONTINUE=0
-            else
-              echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
-            fi
-          fi
+      #     if [ "$CONTINUE" = 1 ]
+      #     then          
+      #       echo -e "\n#### STATUS_STEP_CHECK_LIBS ###"
+      #       if [ "$STATUS_STEP_CHECK_LIBS" = 0 ]
+      #       then
+      #         echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
+      #         MAILMSG+="$MSG_STEP_CHECK_LIBS\n"
+      #         CONTINUE=0
+      #       else
+      #         echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
+      #       fi
+      #     fi
 
-          if [ "$CONTINUE" = 1 ]
-          then          
-            echo -e "\n#### STATUS_STEP_GET_LIBS ###"
-            if [ "$STATUS_STEP_GET_LIBS" = 0 ]
-            then
-              echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
-              MAILMSG+="$MSG_STEP_GET_LIBS\n"
-              CONTINUE=0
-            else
-              echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
-            fi
-          fi
+      #     if [ "$CONTINUE" = 1 ]
+      #     then          
+      #       echo -e "\n#### STATUS_STEP_GET_LIBS ###"
+      #       if [ "$STATUS_STEP_GET_LIBS" = 0 ]
+      #       then
+      #         echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
+      #         MAILMSG+="$MSG_STEP_GET_LIBS\n"
+      #         CONTINUE=0
+      #       else
+      #         echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
+      #       fi
+      #     fi
 
-          if [ "$CONTINUE" = 1 ]
-          then          
-            echo -e "\n#### STATUS_STEP_PUSH ###"
-            if [ "$STATUS_STEP_PUSH" = 0 ]
-            then
-              echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
-              MAILMSG+="$MSG_STEP_PUSH\n"
-              CONTINUE=0
-            else
-              echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
-            fi
-          fi          
+      #     if [ "$CONTINUE" = 1 ]
+      #     then          
+      #       echo -e "\n#### STATUS_STEP_PUSH ###"
+      #       if [ "$STATUS_STEP_PUSH" = 0 ]
+      #       then
+      #         echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
+      #         MAILMSG+="$MSG_STEP_PUSH\n"
+      #         CONTINUE=0
+      #       else
+      #         echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
+      #       fi
+      #     fi          
 
-          if [ "$CONTINUE" = 1 ]
-          then          
-            echo -e "\n#### STATUS_STEP_CREATE_RELEASE ###"
-            if [ "$STATUS_STEP_CREATE_RELEASE" = 0 ]
-            then
-              echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
-              MAILMSG+="$MSG_STEP_CREATE_RELEASE\n"
-              CONTINUE=0
-            else
-              echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
-            fi
-          fi          
+      #     if [ "$CONTINUE" = 1 ]
+      #     then          
+      #       echo -e "\n#### STATUS_STEP_CREATE_RELEASE ###"
+      #       if [ "$STATUS_STEP_CREATE_RELEASE" = 0 ]
+      #       then
+      #         echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
+      #         MAILMSG+="$MSG_STEP_CREATE_RELEASE\n"
+      #         CONTINUE=0
+      #       else
+      #         echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
+      #       fi
+      #     fi          
 
-          if [ "$CONTINUE" = 1 ]
-          then          
-            echo -e "\n#### STATUS_STEP_TRIGGER_OR ###"
-            if [ "$STATUS_STEP_TRIGGER_OR" = 0 ]
-            then
-              echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
-              MAILMSG+="$MSG_STEP_TRIGGER_OR\n"
-              CONTINUE=0
-            else
-              echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
-            fi
-          fi    
+      #     if [ "$CONTINUE" = 1 ]
+      #     then          
+      #       echo -e "\n#### STATUS_STEP_TRIGGER_OR ###"
+      #       if [ "$STATUS_STEP_TRIGGER_OR" = 0 ]
+      #       then
+      #         echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]" 
+      #         MAILMSG+="$MSG_STEP_TRIGGER_OR\n"
+      #         CONTINUE=0
+      #       else
+      #         echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
+      #       fi
+      #     fi    
 
-          if [ "$CONTINUE" = 1 ]
-          then
-            echo -e "\n#### STATUS_STEP_CLEAN_RELEASE ###"
-            if [ "$STATUS_STEP_CLEAN_RELEASE" = 0 ]
-            then
-              echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]"
-              MAILMSG+="$MSG_STEP_CLEAN_RELEASE\n"
-              CONTINUE=0
-            else
-              echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
-            fi
-          fi
+      #     if [ "$CONTINUE" = 1 ]
+      #     then
+      #       echo -e "\n#### STATUS_STEP_CLEAN_RELEASE ###"
+      #       if [ "$STATUS_STEP_CLEAN_RELEASE" = 0 ]
+      #       then
+      #         echo -e "Status\t[ \033[31;2;1mFAILED\033[0m ]"
+      #         MAILMSG+="$MSG_STEP_CLEAN_RELEASE\n"
+      #         CONTINUE=0
+      #       else
+      #         echo -e "Status\t[ \033[32;2;1mOK\033[0m ]"
+      #       fi
+      #     fi
 
-          # Send email 
-          if [ "$CONTINUE" = 0 ] 
-          then
+      #     # Send email 
+      #     if [ "$CONTINUE" = 0 ] 
+      #     then
     
-            # Setting SMTP server (docker host)
-            DOCKER_HOST=`/sbin/ip route|awk '/default/ { print $3 }'`
-            echo "set smtp=smtp://${DOCKER_HOST}:25" >> ${MAIL_CONFIG_FILE}
+      #       # Setting SMTP server (docker host)
+      #       DOCKER_HOST=`/sbin/ip route|awk '/default/ { print $3 }'`
+      #       echo "set smtp=smtp://${DOCKER_HOST}:25" >> ${MAIL_CONFIG_FILE}
 
-            # Print message in log 
-            echo -e $MAILMSG
+      #       # Print message in log 
+      #       echo -e $MAILMSG
 
-            # Send email
-            SUBJECT="[ NEW EXTLIB OPENRADIOSS_EXTLIB ] - Error in CI"
-            echo -e "${MAILMSG}" | ${MAIL_COMMAND} -r ${FROM_EMAIL} -s "${SUBJECT}" ${TO_EMAIL}
+      #       # Send email
+      #       SUBJECT="[ NEW EXTLIB OPENRADIOSS_EXTLIB ] - Error in CI"
+      #       echo -e "${MAILMSG}" | ${MAIL_COMMAND} -r ${FROM_EMAIL} -s "${SUBJECT}" ${TO_EMAIL}
 
-            # Exit fail to see it as a failure
-            exit 1
-          fi
+      #       # Exit fail to see it as a failure
+      #       exit 1
+      #     fi
