@@ -236,10 +236,9 @@ jobs:
         run: |    
           # Set correct end of step status (if not an email will be sent)
           echo "STATUS_STEP_PUSH=1" >> $GITHUB_ENV
+          NEW_VERSION_FULL_SHA=$(git rev-parse HEAD)
+          echo "NEW_VERSION_FULL_SHA=${NEW_VERSION_FULL_SHA}" >> $GITHUB_ENV
 
-      # The action creates the release with an already existing tag (latest-xxxxx) so we use option skip_tag_creation: true
-      # We do this because we have already checkouted the wanted commit before
-      # Prerequisite: create the tag with command : git tag latest-YYYMMDD <commit id>; git push origin latest-YYYMMDD
       - name: Release the new binaries
         uses: docker://ghcr.io/mini-bomba/create-github-release:v1.2.0
         with:
@@ -250,7 +249,8 @@ jobs:
             Find here last ext libs for radioss including hmreader in version v${{ env.EXTLIB_VERSION }} delivered on ${{ env.CURRENT_DATE }}
           files: |
             extlib.zip
-          clear_attachments: true    
+          clear_attachments: true
+          target_commit: ${{ env.NEW_VERSION_FULL_SHA }}
 
       - name: Set release creation status
         run: |    
