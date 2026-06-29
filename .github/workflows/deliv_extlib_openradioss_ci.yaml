@@ -199,12 +199,12 @@ jobs:
           echo "CURRENT_DATE=${current_date}" >> $GITHUB_ENV
 
           # Add new files
-          # git config --global user.email "${{ env.GIT_SERVBOT_EMAIL }}"
-          # git config --global user.name "${{ env.GIT_SERVBOT_USER }}"
-          # git add ${{ env.VERSION_FILE }}
-          # echo "---status----" 
-          # git status
-          # echo "---status----" 
+          git config --global user.email "${{ env.GIT_SERVBOT_EMAIL }}"
+          git config --global user.name "${{ env.GIT_SERVBOT_USER }}"
+          git add ${{ env.VERSION_FILE }}
+          echo "---status----" 
+          git status
+          echo "---status----" 
 
           echo "Committing new version file to v${current_version}"
 
